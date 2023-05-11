@@ -2,7 +2,6 @@ from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.tl.types import InputPeerEmpty
-
 from MessageProcesser import replace_tags
 from NicknameGenerator import generate_nickname
 from ToSheetConverter import create_xlsx_with_authors, create_xlsx_tag_nickname
@@ -10,9 +9,9 @@ from ToSheetConverter import create_xlsx_with_authors, create_xlsx_tag_nickname
 
 def parse_chats():
     global username, message
-    api_id = YOUR_IP_ID
-    api_hash = YOUR_IP_HASH
-    phone = YOUR_PHONE_NUMBER
+    api_id = 26805561
+    api_hash = '1bf6f75b2a8f3c6f883f2f1731760a08'
+    phone = '79539767697'
     client = TelegramClient(phone, api_id, api_hash, )
     client.start()
     chats = []
@@ -33,6 +32,11 @@ def parse_chats():
                 groups.append(chat)
         except:
             continue
+    # Скорее всего, для получения всех чатов нужно поменять метод получения всех диалогов с 21 строки
+    # https://docs.telethon.dev/en/stable/modules/client.html#telethon.client.dialogs.DialogMethods.iter_dialogs
+    # dialogs = await client.get_dialogs()
+    # for dialog in dialogs:
+    #     print(dialog.title)
     print("Выберите группу для парсинга сообщений и членов группы:")
     i = 0
     for g in groups:
@@ -41,7 +45,6 @@ def parse_chats():
     g_index = input("Введите нужную цифру: ")
     target_group = groups[int(g_index)]
     print("Узнаём пользователей...")
-    all_participants = []
     all_participants = client.get_participants(target_group)
     participants_fake_names = {}
     print("Сохраняем данные в файл...")
@@ -88,7 +91,7 @@ def parse_chats():
                 author = client.get_entity(author_id)
                 author_username = author.username
                 sending_date = message.date
-                text = replace_tags(message.message)
+                text = replace_tags(message.message, participants_fake_names)
             messages_dict[i] = {
                 'Дата отправки': sending_date,
                 'Имя отправителя': participants_fake_names[author_username],

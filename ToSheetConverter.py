@@ -28,7 +28,7 @@ def create_xlsx_tag_nickname(tag_nickname_dict, sheet_name='tag_nickname.xlsx'):
 
 
 def create_xlsx_with_authors(messages_dict, sheet_name='chat_history_with_authors.xlsx'):
-    workbook = xlsxwriter.Workbook(sheet_name)
+    workbook = xlsxwriter.Workbook(sheet_name, {'remove_timezone': True})
     worksheet = workbook.add_worksheet()
     row = 0
     date_col = 0
