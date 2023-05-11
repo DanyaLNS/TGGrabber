@@ -1,71 +1,104 @@
-import configparser
-import json
-
 from telethon.sync import TelegramClient
-from telethon import connection
-
-# для корректного переноса времени сообщений в json
-from datetime import date, datetime
-
-# классы для работы с каналами
-from telethon.tl.functions.channels import GetParticipantsRequest
-from telethon.tl.types import ChannelParticipantsSearch
-
-# класс для работы с сообщениями
+from telethon.tl.functions.messages import GetDialogsRequest
 from telethon.tl.functions.messages import GetHistoryRequest
+from telethon.tl.types import InputPeerEmpty
 
-# Считываем учетные данные
-config = configparser.ConfigParser()
-config.read("config.ini")
-
-# Присваиваем значения внутренним переменным
-api_id = config['Telegram']['api_id']
-api_hash = config['Telegram']['api_hash']
-username = config['Telegram']['username']
-
-client = TelegramClient(username, api_id, api_hash)
-
-client.start()
+from MessageProcesser import replace_tags
+from NicknameGenerator import generate_nickname
+from ToSheetConverter import create_xlsx_with_authors, create_xlsx_tag_nickname
 
 
-async def dump_all_messages(channel):
-    offset_msg = 0
-    limit_msg = 100
-
+def parse_chats():
+    global username, message
+    api_id = YOUR_IP_ID
+    api_hash = YOUR_IP_HASH
+    phone = YOUR_PHONE_NUMBER
+    client = TelegramClient(phone, api_id, api_hash, )
+    client.start()
+    chats = []
+    last_date = None
+    chunk_size = 200
+    groups = []
+    result = client(GetDialogsRequest(
+        offset_date=last_date,
+        offset_id=0,
+        offset_peer=InputPeerEmpty(),
+        limit=chunk_size,
+        hash=0
+    ))
+    chats.extend(result.chats)
+    for chat in chats:
+        try:
+            if chat.megagroup:
+                groups.append(chat)
+        except:
+            continue
+    print("Выберите группу для парсинга сообщений и членов группы:")
+    i = 0
+    for g in groups:
+        print(str(i) + "- " + g.title)
+        i += 1
+    g_index = input("Введите нужную цифру: ")
+    target_group = groups[int(g_index)]
+    print("Узнаём пользователей...")
+    all_participants = []
+    all_participants = client.get_participants(target_group)
+    participants_fake_names = {}
+    print("Сохраняем данные в файл...")
+    for user in all_participants:
+        if user.username:
+            username = user.username
+        else:
+            username = ""
+        if username in participants_fake_names:
+            pass
+        else:
+            participants_fake_names[username] = generate_nickname(username)
+    print(participants_fake_names)
+    create_xlsx_tag_nickname(participants_fake_names)
+    print("Парсинг участников группы успешно выполнен.")
+    offset_id = 0
+    limit = 100
     all_messages = []
+    authors = []
+    total_messages = 0
     total_count_limit = 0
-
-
+    messages_dict = {}
     while True:
-        history = await client(GetHistoryRequest(
-            peer=channel,
-            offset_id=offset_msg,
-            offset_date=None, add_offset=0,
-            limit=limit_msg, max_id=0, min_id=0,
-            hash=0))
+        history = client(GetHistoryRequest(
+            peer=target_group,
+            offset_id=offset_id,
+            offset_date=None,
+            add_offset=0,
+            limit=limit,
+            max_id=0,
+            min_id=0,
+            hash=0
+        ))
         if not history.messages:
             break
         messages = history.messages
+
+        i = 0
         for message in messages:
-            all_messages.append(message.to_dict())
-        offset_msg = messages[len(messages) - 1].id
-        total_messages = len(all_messages)
+            if message.from_id is None:
+                break
+            else:
+                author_id = message.from_id.user_id
+                author = client.get_entity(author_id)
+                author_username = author.username
+                sending_date = message.date
+                text = replace_tags(message.message)
+            messages_dict[i] = {
+                'Дата отправки': sending_date,
+                'Имя отправителя': participants_fake_names[author_username],
+                'Сообщение': text,
+                'В ответ на': message.reply_to
+            }
+
+        offset_id = messages[len(messages) - 1].id
         if total_count_limit != 0 and total_messages >= total_count_limit:
             break
-
-    return all_messages
-
-async def do_grabbing():
-    url = input("Введите ссылку на канал или чат: ")
-    channel = await client.get_entity(url)
-    messages = await dump_all_messages(channel)
-    return messages
-
-
-def show_credentials():
-    print(api_id)
-    print(api_hash)
-
-
-with client:
-    client.loop.run_until_complete(do_grabbing())
+    print("Сохраняем данные в файл...")
+    create_xlsx_with_authors(messages_dict)
+    print('Парсинг сообщений группы успешно выполнен.')
