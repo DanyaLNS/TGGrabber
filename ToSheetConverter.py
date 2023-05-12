@@ -27,7 +27,7 @@ def create_xlsx_tag_nickname(tag_nickname_dict, sheet_name='tag_nickname.xlsx'):
     return get_path_to_xlsx(sheet_name)
 
 
-def create_xlsx_with_authors(messages_dict, sheet_name='chat_history_with_authors.xlsx'):
+def create_xlsx_with_authors(messages, sheet_name='chat_history_with_authors.xlsx'):
     workbook = xlsxwriter.Workbook(sheet_name, {'remove_timezone': True})
     worksheet = workbook.add_worksheet()
     row = 0
@@ -41,7 +41,7 @@ def create_xlsx_with_authors(messages_dict, sheet_name='chat_history_with_author
     worksheet.write(row, message_col, 'Сообщение')
     worksheet.write(row, reply_col, 'В ответ на')
 
-    for key, message in messages_dict.items():
+    for message in messages:
         row += 1
         worksheet.write(row, date_col, message['Дата отправки'])
         worksheet.write(row, author_col, message['Имя отправителя'])

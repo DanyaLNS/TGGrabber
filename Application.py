@@ -1,8 +1,8 @@
-from Grabber import parse_chats
+from ChannelGrabber import parse_channels
 
 
 def main():
-    parse_chats()
+    parse_channels()
 
 
 if __name__ == "__main__":

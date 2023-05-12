@@ -9,9 +9,9 @@ from ToSheetConverter import create_xlsx_with_authors, create_xlsx_tag_nickname
 
 def parse_chats():
     global username, message
-    api_id = 26805561
-    api_hash = '1bf6f75b2a8f3c6f883f2f1731760a08'
-    phone = '79539767697'
+    api_id =
+    api_hash =
+    phone =
     client = TelegramClient(phone, api_id, api_hash, )
     client.start()
     chats = []
@@ -56,7 +56,7 @@ def parse_chats():
         if username in participants_fake_names:
             pass
         else:
-            participants_fake_names[username] = generate_nickname(username)
+            participants_fake_names[username] = generate_nickname()
     print(participants_fake_names)
     create_xlsx_tag_nickname(participants_fake_names)
     print("Парсинг участников группы успешно выполнен.")

@@ -57,7 +57,7 @@ source_to_generate = {
 }
 
 
-def generate_nickname(tag):
+def generate_nickname():
     first_part = source_to_generate['part1'][random.randint(0, len(source_to_generate['part1']) - 1)]
     second_part = source_to_generate['part2'][random.randint(0, len(source_to_generate['part2']) - 1)]
     number = str(random.randint(0, 100))
